@@ -14,7 +14,7 @@ All variables are optional.
 | `zot_quadlet_options` | `[]` | Additional Quadlet options for the container unit. |
 | `zot_listen_port` | `127.0.0.1:5000` | Host publish address for the registry. |
 | `zot_config_dir` | `/etc/zot` | Host directory holding `config.json`. |
-| `zot_config` | see `defaults/main.yml` | Additional zot configuration, recursively merged beneath the role's minimal configuration and written to `config.json`. Role-managed keys (`distSpecVersion`, `storage.rootDirectory`, `http.address`, `http.port`, `log.level`) take precedence. See the [zot configuration reference](https://zotregistry.dev/v2.1.22/admin-guide/admin-configuration/). |
+| `zot_config` | see `defaults/main.yml` | Additional zot configuration, recursively merged beneath the role's minimal configuration and written to `config.json`. Role-managed keys (`distSpecVersion`, `storage.rootDirectory`, `http.address`, `http.port`, `http.auth.htpasswd.path`, `log.level`) take precedence. See the [zot configuration reference](https://zotregistry.dev/v2.1.22/admin-guide/admin-configuration/). |
 | `zot_user_account` | `zot` | Account that owns the configuration directory and runs the container. Use `root` for a system-scoped root deployment, or `null` to use the account Ansible executes as. |
 | `zot_log_level` | `info` | Log level written to `log.level` in the generated configuration. Use this instead of `zot_config.log.level`, which the minimal configuration overrides. |
 | `zot_apache_vhost` | `false` | Write an Apache httpd vhost that reverse proxies zot over HTTPS. The role does not install Apache; see [Apache httpd reverse proxy](#apache-httpd-reverse-proxy). |
@@ -24,6 +24,7 @@ All variables are optional.
 | `zot_apache_hsts` | `false` | Send the HSTS header from the HTTPS vhost. |
 | `zot_apache_backend_url` | `http://{{ zot_listen_port }}` | URL that Apache proxies requests to. |
 | `zot_apache_vhost_name` | `zot` | Base name of the vhost file, `<name>.conf`. |
+| `zot_htpasswd_users` | `[]` | Local users for htpasswd authentication. Each entry needs a `name` and a `password`; hashes are written to `/etc/zot/htpasswd`, which always exists. Keep passwords in an encrypted source such as Ansible Vault. |
 | `zot_debug` | `false` | Disables `no_log` on the container and systemd tasks. Enable it only temporarily while troubleshooting. |
 
 ### Configuration handling
@@ -33,6 +34,22 @@ The role starts from a minimal zot configuration defined in `vars/main.yml`.
 `<zot_config_dir>/config.json`; where both define the same key, the minimal
 configuration wins, while non-conflicting user keys are kept. The file is
 regenerated on every run, so direct edits to it are overwritten.
+
+### Local users (htpasswd)
+
+Each entry in `zot_htpasswd_users` needs a `name` and a `password`. Passwords
+are hashed and the salt is derived from the user name, keeping the file unchanged
+across runs unless a user or password changes. zot watches the file and reloads
+it without a restart.
+
+```yaml
+zot_htpasswd_users:
+  - name: 'alice'
+    password: "{{ vault_zot_alice_password }}"
+```
+
+Note that an empty file leaves no user able to authenticate, so define at least one user
+before using the registry.
 
 ### Data and service lifecycle
 

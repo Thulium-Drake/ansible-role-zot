@@ -1,4 +1,7 @@
 ---
+- name: 'Ensure htpasswd file'
+  ansible.builtin.import_tasks: 'htpasswd.yml'
+
 - name: 'Write zot configuration'
   ansible.builtin.copy:
     content: "{{ zot_config | combine(zot_config_minimal, recursive=True) | to_nice_json }}\n"

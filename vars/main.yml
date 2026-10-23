@@ -5,6 +5,7 @@ zot_container_port: 5000
 zot_data_volume_name: 'zot-data'
 zot_data_dir: '/var/lib/zot'
 zot_container_config_dir: '/etc/zot'
+zot_container_htpasswd_file: "{{ zot_container_config_dir }}/htpasswd"
 zot_volume_driver: 'local'
 
 # Platform-specific paths and service name, derived from the OS family.
@@ -22,6 +23,9 @@ zot_config_minimal:
   http:
     address: '0.0.0.0'
     port: "{{ zot_container_port | string }}"
+    auth:
+      htpasswd:
+        path: "{{ zot_container_htpasswd_file }}"
   log:
     level: "{{ zot_log_level }}"
 

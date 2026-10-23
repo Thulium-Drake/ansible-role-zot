@@ -49,6 +49,15 @@ zot_apache_backend_url: "http://{{ zot_listen_port }}"
 # File name of the vhost configuration, without the .conf extension.
 zot_apache_vhost_name: 'zot'
 
+# Local zot users for htpasswd authentication. Each entry needs a name and a
+# password; the passwords are hashed and written to /etc/zot/htpasswd, which is
+# created even when this list is empty so the minimal configuration can always
+# reference it. Keep the passwords in an encrypted variable source such as
+# Ansible Vault.
+zot_htpasswd_users: []
+# - name: 'alice'
+#   password: 'change-me'
+
 # When enabled, no_log is disabled on tasks that may expose secrets in their
 # output. Only enable this temporarily while troubleshooting.
 zot_debug: false
