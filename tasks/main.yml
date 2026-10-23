@@ -20,23 +20,14 @@
   become: true
   when: zot_user_account != 'root'
 
-- name: 'Check lingering for zot user'
-  ansible.builtin.command:
-    cmd: "loginctl show-user {{ zot_user_account }} --property=Linger --value"
-  register: 'zot_linger'
-  changed_when: false
-  check_mode: false
-  become: true
-  when: zot_user_account != 'root'
-
-- name: 'Enable lingering for zot user'
-  ansible.builtin.command:
-    cmd: "loginctl enable-linger {{ zot_user_account }}"
+- name: 'Ensure lingering enabled'
+  ansible.builtin.command: "loginctl enable-linger {{ zot_user_account }}"
+  args:
+    creates: "/var/lib/systemd/linger/{{ podman_user_account }}"
   changed_when: true
   become: true
   when:
     - zot_user_account != 'root'
-    - (zot_linger['stdout'] | default('')) != 'yes'
 
 - name: 'Ensure zot configuration directory'
   ansible.builtin.file:
