@@ -58,3 +58,7 @@
 
     - name: 'Flush handlers'
       ansible.builtin.meta: 'flush_handlers'
+
+- name: 'Provision Apache httpd vhost'
+  ansible.builtin.import_tasks: 'apache.yml'
+  when: zot_apache_vhost | bool

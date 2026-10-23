@@ -17,6 +17,13 @@ All variables are optional.
 | `zot_config` | see `defaults/main.yml` | Additional zot configuration, recursively merged beneath the role's minimal configuration and written to `config.json`. Role-managed keys (`distSpecVersion`, `storage.rootDirectory`, `http.address`, `http.port`, `log.level`) take precedence. See the [zot configuration reference](https://zotregistry.dev/v2.1.22/admin-guide/admin-configuration/). |
 | `zot_user_account` | `zot` | Account that owns the configuration directory and runs the container. Use `root` for a system-scoped root deployment, or `null` to use the account Ansible executes as. |
 | `zot_log_level` | `info` | Log level written to `log.level` in the generated configuration. Use this instead of `zot_config.log.level`, which the minimal configuration overrides. |
+| `zot_apache_vhost` | `false` | Write an Apache httpd vhost that reverse proxies zot over HTTPS. The role does not install Apache; see [Apache httpd reverse proxy](#apache-httpd-reverse-proxy). |
+| `zot_apache_server_name` | `{{ ansible_facts['fqdn'] }}` | Hostname the vhost answers on. It must be unique among the vhosts of the httpd instance. |
+| `zot_apache_cert` | `/etc/ssl/server.crt` | TLS certificate used by the HTTPS vhost. |
+| `zot_apache_key` | `/etc/ssl/server.key` | TLS key used by the HTTPS vhost. |
+| `zot_apache_hsts` | `false` | Send the HSTS header from the HTTPS vhost. |
+| `zot_apache_backend_url` | `http://{{ zot_listen_port }}` | URL that Apache proxies requests to. |
+| `zot_apache_vhost_name` | `zot` | Base name of the vhost file, `<name>.conf`. |
 | `zot_debug` | `false` | Disables `no_log` on the container and systemd tasks. Enable it only temporarily while troubleshooting. |
 
 ### Configuration handling
@@ -46,6 +53,28 @@ so the user-scoped unit starts at boot.
 
 When using `null` to detect the ansible user account, `become` must be `false`.
 
+### Apache httpd reverse proxy
+
+The role does not install Apache httpd. When `zot_apache_vhost` is enabled it
+writes a vhost into the configuration directory of an existing installation and
+reloads the service if it is running.
+
+The vhost proxies to `zot_apache_backend_url`, which defaults to the registry's
+local publish address, so zot itself can stay bound to `127.0.0.1`. The
+registry is always served over HTTPS: the port 80 vhost permanently redirects
+to port 443.
+
+The layout follows the
+[netboot_server](https://github.com/Thulium-Drake/ansible-role-netboot_server)
+role, so both roles can share one httpd instance. Give zot its own
+`zot_apache_server_name` thas does not overlap with a different vhost.
+
+Requirements on the existing installation:
+
+- When using OpenID authentication behind the proxy, set
+  `zot_config.http.externalUrl` to the public vhost URL so redirects point at
+  Apache instead of the container.
+
 ## Example playbooks
 
 Minimal deployment, bound to `127.0.0.1:5000` on the host:
@@ -69,5 +98,18 @@ Expose the registry on all interfaces and customize the zot configuration:
         gc: true
         dedupe: true
   roles:
+    - 'zot'
+```
+
+Reuse the Apache instance and TLS settings of the netboot_server role:
+
+```yaml
+- name: 'Deploy zot behind the netboot server'
+  hosts: 'zot_servers'
+  vars:
+    zot_apache_vhost: true
+    zot_apache_server_name: 'zot.deploy.example.nl'
+  roles:
+    - 'netboot_server'
     - 'zot'
 ```

@@ -28,6 +28,27 @@ zot_user_account: 'zot'
 # Log level for zot, written to log.level in the generated configuration.
 zot_log_level: 'info'
 
+# Apache httpd reverse proxy. The role never installs Apache; enable this to
+# add a vhost to a pre-existing installation. The layout matches the
+# netboot_server role, so both roles can share one httpd instance. The vhost
+# always serves the registry over HTTPS and redirects HTTP to it.
+zot_apache_vhost: false
+
+# Fully qualified hostname of the registry. It must differ from the hostname
+# of other vhosts on the same server, such as netboot_server_name.
+zot_apache_server_name: "{{ ansible_facts['fqdn'] }}"
+
+# Certificate and key used by the HTTPS vhost.
+zot_apache_cert: '/etc/ssl/server.crt'
+zot_apache_key: '/etc/ssl/server.key'
+zot_apache_hsts: false
+
+# URL under which Apache can reach zot, used as the reverse proxy target.
+zot_apache_backend_url: "http://{{ zot_listen_port }}"
+
+# File name of the vhost configuration, without the .conf extension.
+zot_apache_vhost_name: 'zot'
+
 # When enabled, no_log is disabled on tasks that may expose secrets in their
 # output. Only enable this temporarily while troubleshooting.
 zot_debug: false

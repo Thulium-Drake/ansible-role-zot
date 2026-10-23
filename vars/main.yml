@@ -7,6 +7,12 @@ zot_data_dir: '/var/lib/zot'
 zot_container_config_dir: '/etc/zot'
 zot_volume_driver: 'local'
 
+# Platform-specific paths and service name, derived from the OS family.
+zot_apache_config_dir: "{{ (ansible_facts['os_family'] == 'RedHat') | ternary('/etc/httpd/conf.d', '/etc/apache2/sites-available') }}"
+zot_apache_config_enabled_dir: "{{ (ansible_facts['os_family'] == 'RedHat') | ternary('/etc/httpd/conf.d', '/etc/apache2/sites-enabled') }}"
+zot_apache_log_dir: "{{ (ansible_facts['os_family'] == 'RedHat') | ternary('/var/log/httpd', '/var/log/apache2') }}"
+zot_apache_service: "{{ (ansible_facts['os_family'] == 'RedHat') | ternary('httpd', 'apache2') }}"
+
 # Minimal configuration required for zot to start. These values take
 # precedence over user settings from zot_config in tasks/deploy.yml.
 zot_config_minimal:

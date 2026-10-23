@@ -1,0 +1,49 @@
+---
+- name: 'Provision Apache httpd vhost'
+  become: true
+  block:
+    - name: 'Write Apache httpd vhost'
+      ansible.builtin.template:
+        src: 'apache-httpd-vhost.conf.j2'
+        dest: "{{ zot_apache_config_dir }}/{{ zot_apache_vhost_name }}.conf"
+        owner: 'root'
+        group: 'root'
+        mode: '0644'
+      notify: 'Reload Apache httpd'
+
+    # Debian and Ubuntu only read vhosts that are linked into sites-enabled.
+    - name: 'Enable Apache httpd vhost'
+      ansible.builtin.file:
+        src: "{{ zot_apache_config_dir }}/{{ zot_apache_vhost_name }}.conf"
+        dest: "{{ zot_apache_config_enabled_dir }}/{{ zot_apache_vhost_name }}.conf"
+        state: 'link'
+      when: zot_apache_config_enabled_dir != zot_apache_config_dir
+      notify: 'Reload Apache httpd'
+
+    # On EL, httpd runs confined by SELinux and may not open the proxy
+    # connection to the registry until the boolean allows outbound network
+    # access, which surfaces as a 503 from the vhost.
+    - name: 'Check SELinux mode'
+      ansible.builtin.command:
+        cmd: 'getenforce'
+      register: 'zot_apache_selinux_mode'
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      when: ansible_facts['os_family'] == 'RedHat'
+
+    - name: 'Read SELinux permission for httpd network connections'
+      ansible.builtin.command:
+        cmd: 'getsebool httpd_can_network_connect'
+      register: 'zot_apache_selinux_httpd_connect'
+      changed_when: false
+      check_mode: false
+      when: zot_apache_selinux_mode['stdout'] | default('') in ['Enforcing', 'Permissive']
+
+    - name: 'Allow Apache httpd to connect to zot'
+      ansible.builtin.command:
+        cmd: 'setsebool -P httpd_can_network_connect on'
+      changed_when: true
+      when:
+        - zot_apache_selinux_mode['stdout'] | default('') in ['Enforcing', 'Permissive']
+        - zot_apache_selinux_httpd_connect['stdout'] | default('') is search('--> *off')
