@@ -1,0 +1,9 @@
+---
+- name: 'Restart zot'
+  ansible.builtin.systemd:
+    name: 'zot'
+    state: 'restarted'
+    daemon_reload: true
+    scope: "{{ (zot_user_account != 'root') | ternary('user', 'system') }}"
+  become: "{{ (zot_effective_user['stdout'] != zot_user_account) | bool }}"
+  become_user: "{{ zot_user_account }}"

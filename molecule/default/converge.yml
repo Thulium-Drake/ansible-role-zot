@@ -1,0 +1,10 @@
+---
+- name: 'Converge'
+  hosts: 'all'
+  vars:
+    zot_debug: true  # We always want to know what the role does in CI
+    zot_user_account: 'root'  # Nested containers in molecule are tricky
+  tasks:
+    - name: 'Run role'
+      ansible.builtin.import_role:
+        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"

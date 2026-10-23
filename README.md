@@ -1,0 +1,73 @@
+# Ansible role: zot
+
+Deploy the [zot](https://zotregistry.dev/) OCI-native container registry as a
+Podman container managed by systemd Quadlet.
+
+## Role variables
+
+All variables are optional.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `zot_image` | `ghcr.io/project-zot/zot-linux-amd64:v2.1.22` | Container image and tag. Upstream publishes one image per architecture, so the default is the linux/amd64 image. |
+| `zot_pull_policy` | `newer` | Podman pull policy: `always`, `missing`, `never`, or `newer`. |
+| `zot_quadlet_options` | `[]` | Additional Quadlet options for the container unit. |
+| `zot_listen_port` | `127.0.0.1:5000` | Host publish address for the registry. |
+| `zot_config_dir` | `/etc/zot` | Host directory holding `config.json`. |
+| `zot_config` | see `defaults/main.yml` | Additional zot configuration, recursively merged beneath the role's minimal configuration and written to `config.json`. Role-managed keys (`distSpecVersion`, `storage.rootDirectory`, `http.address`, `http.port`, `log.level`) take precedence. See the [zot configuration reference](https://zotregistry.dev/v2.1.22/admin-guide/admin-configuration/). |
+| `zot_user_account` | `zot` | Account that owns the configuration directory and runs the container. Use `root` for a system-scoped root deployment, or `null` to use the account Ansible executes as. |
+| `zot_log_level` | `info` | Log level written to `log.level` in the generated configuration. Use this instead of `zot_config.log.level`, which the minimal configuration overrides. |
+| `zot_debug` | `false` | Disables `no_log` on the container and systemd tasks. Enable it only temporarily while troubleshooting. |
+
+### Configuration handling
+
+The role starts from a minimal zot configuration defined in `vars/main.yml`.
+`zot_config` is recursively combined beneath it and written as JSON to
+`<zot_config_dir>/config.json`; where both define the same key, the minimal
+configuration wins, while non-conflicting user keys are kept. The file is
+regenerated on every run, so direct edits to it are overwritten.
+
+### Data and service lifecycle
+
+Registry data is stored in the Podman volume `zot-data`. The role only ensures
+the volume exists and never removes it, so repositories survive container
+restarts and repeated role runs.
+
+Changes to the container, volume, or configuration notify a handler that
+restarts the `zot` systemd unit. The unit is enabled and started on every role
+run.
+
+### Non-root deployments
+
+The role creates `zot_user_account` when it does not exist. It creates a regular
+account (not a system account) so that `useradd` allocates the subordinate
+UID/GID ranges rootless Podman requires. Lingering is enabled for the account
+so the user-scoped unit starts at boot.
+
+When using `null` to detect the ansible user account, `become` must be `false`.
+
+## Example playbooks
+
+Minimal deployment, bound to `127.0.0.1:5000` on the host:
+
+```yaml
+- name: 'Deploy zot'
+  hosts: 'all'
+  roles:
+    - 'zot'
+```
+
+Expose the registry on all interfaces and customize the zot configuration:
+
+```yaml
+- name: 'Deploy zot registry'
+  hosts: 'zot_servers'
+  vars:
+    zot_listen_port: '0.0.0.0:5000'
+    zot_config:
+      storage:
+        gc: true
+        dedupe: true
+  roles:
+    - 'zot'
+```

@@ -1,0 +1,34 @@
+---
+- name: 'Write zot configuration'
+  ansible.builtin.copy:
+    content: "{{ zot_config | combine(zot_config_minimal, recursive=True) | to_nice_json }}\n"
+    dest: "{{ zot_config_dir }}/config.json"
+    mode: '0640'
+
+- name: 'Deploy zot container'
+  containers.podman.podman_container:
+    name: 'zot'
+    state: 'quadlet'
+    auto_remove: true
+    command: "{{ zot_containers['zot']['command'] | default(omit) }}"
+    env: "{{ zot_containers['zot']['env'] | default(omit) }}"
+    healthcheck: "{{ zot_containers['zot']['healthcheck'] | default(omit) }}"
+    healthcheck_interval: "{{ zot_containers['zot']['healthcheck_interval'] | default(omit) }}"
+    healthcheck_retries: "{{ zot_containers['zot']['healthcheck_retries'] | default(omit) }}"
+    healthcheck_timeout: "{{ zot_containers['zot']['healthcheck_timeout'] | default(omit) }}"
+    image: "{{ zot_containers['zot']['image'] }}"
+    ports: "{{ zot_containers['zot']['ports'] | default(omit) }}"
+    pull: "{{ zot_pull_policy }}"
+    quadlet_options: "{{ zot_containers['zot']['quadlet_options'] | default(zot_quadlet_options) }}"
+    volume: "{{ zot_containers['zot']['volume'] | default(omit) }}"
+  notify: 'Restart zot'
+  no_log: "{{ not (zot_debug | bool) }}"
+
+- name: 'Ensure zot service'
+  ansible.builtin.systemd:
+    name: 'zot'
+    state: 'started'
+    enabled: true
+    daemon_reload: true
+    scope: "{{ (zot_user_account != 'root') | ternary('user', 'system') }}"
+  no_log: "{{ not (zot_debug | bool) }}"

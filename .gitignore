@@ -1,0 +1,4 @@
+.ansible/
+molecule/default/tests/__pycache__/
+*.swp
+*.pyc

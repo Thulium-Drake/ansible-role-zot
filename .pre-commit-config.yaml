@@ -1,0 +1,19 @@
+---
+repos:
+  - repo: 'https://github.com/pre-commit/pre-commit-hooks'
+    rev: 'v6.0.0'
+    hooks:
+      - id: 'trailing-whitespace'
+      - id: 'end-of-file-fixer'
+      - id: 'check-yaml'
+      - id: 'check-added-large-files'
+      - id: 'check-merge-conflict'
+  - repo: 'https://github.com/Thulium-Drake/pre-commit-hooks'
+    rev: '0.0.3'
+    hooks:
+      - id: 'ansible-sign'
+  - repo: 'https://github.com/ansible-community/ansible-lint.git'
+    rev: 'v26.10.1'
+    hooks:
+      - id: ansible-lint
+        files: \.(yaml|yml)$

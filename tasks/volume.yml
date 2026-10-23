@@ -1,0 +1,10 @@
+---
+- name: 'Ensure volumes'
+  containers.podman.podman_volume:
+    name: "{{ volume }}"
+    state: 'quadlet'
+    driver: "{{ zot_volume_driver }}"
+  notify: 'Restart zot'
+  loop: "{{ zot_volumes }}"
+  loop_control:
+    loop_var: 'volume'

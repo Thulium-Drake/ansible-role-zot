@@ -1,0 +1,34 @@
+---
+# Internal role variables. These define the Podman resources and are not
+# intended to be overridden by users.
+zot_container_port: 5000
+zot_data_volume_name: 'zot-data'
+zot_data_dir: '/var/lib/zot'
+zot_container_config_dir: '/etc/zot'
+zot_volume_driver: 'local'
+
+# Minimal configuration required for zot to start. These values take
+# precedence over user settings from zot_config in tasks/deploy.yml.
+zot_config_minimal:
+  distSpecVersion: '1.1.1'
+  storage:
+    rootDirectory: "{{ zot_data_dir }}"
+  http:
+    address: '0.0.0.0'
+    port: "{{ zot_container_port | string }}"
+  log:
+    level: "{{ zot_log_level }}"
+
+zot_volumes:
+  - "{{ zot_data_volume_name }}"
+
+# Container definitions. Dict keys are the resulting container/systemd unit names.
+zot_containers:
+  zot:
+    image: "{{ zot_image }}"
+    command: "serve {{ zot_container_config_dir }}/config.json"
+    ports:
+      - "{{ zot_listen_port }}:{{ zot_container_port }}"
+    volume:
+      - "{{ zot_data_volume_name }}:{{ zot_data_dir }}:Z"
+      - "{{ zot_config_dir }}:{{ zot_container_config_dir }}:ro,Z"

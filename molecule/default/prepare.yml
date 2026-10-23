@@ -1,0 +1,8 @@
+---
+- name: 'Prepare'
+  hosts: 'all'
+  tasks:
+    - name: 'Ensure podman is available'
+      ansible.builtin.package:
+        name: 'podman'
+        state: 'present'

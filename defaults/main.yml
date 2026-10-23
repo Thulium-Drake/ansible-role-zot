@@ -1,0 +1,33 @@
+---
+# zot container image.
+zot_image: 'ghcr.io/project-zot/zot-linux-amd64:v2.1.22'
+
+# Podman and systemd behaviour.
+zot_pull_policy: 'newer'
+zot_quadlet_options: []
+
+# Host port on which the registry is published on the host.
+zot_listen_port: '127.0.0.1:5000'
+
+# Static host directory containing the generated zot config. For non-root
+# deployments the directory is created and owned by the zot user.
+zot_config_dir: '/etc/zot'
+
+# User managed zot configuration. The minimal configuration defined in
+# vars/main.yml is recursively merged on top of it, so role-managed keys take
+# precedence.
+# See https://zotregistry.dev/v2.1.22/admin-guide/admin-configuration/ for
+# more details on how to configure zot.
+zot_config: {}
+
+# Account that owns the configuration directory and runs the container. The
+# role creates it if it does not exist. Set to null to use the account Ansible
+# executes as, or to 'root' for a system-scoped deployment.
+zot_user_account: 'zot'
+
+# Log level for zot, written to log.level in the generated configuration.
+zot_log_level: 'info'
+
+# When enabled, no_log is disabled on tasks that may expose secrets in their
+# output. Only enable this temporarily while troubleshooting.
+zot_debug: false

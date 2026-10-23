@@ -1,0 +1,60 @@
+---
+- name: 'Gather current effective user for systemd service restarts'
+  ansible.builtin.command: 'whoami'
+  register: 'zot_effective_user'
+  changed_when: false
+
+- name: 'Set fact for user account'
+  ansible.builtin.set_fact:
+    zot_user_account: "{{ zot_effective_user['stdout'] }}"
+  when: zot_user_account is none
+
+# A regular account is used deliberately: useradd only allocates the
+# subordinate UID/GID ranges required by rootless Podman for regular users.
+- name: 'Ensure zot user account'
+  ansible.builtin.user:
+    name: "{{ zot_user_account }}"
+    comment: 'zot container registry'
+    create_home: true
+    state: 'present'
+  become: true
+  when: zot_user_account != 'root'
+
+- name: 'Check lingering for zot user'
+  ansible.builtin.command:
+    cmd: "loginctl show-user {{ zot_user_account }} --property=Linger --value"
+  register: 'zot_linger'
+  changed_when: false
+  check_mode: false
+  become: true
+  when: zot_user_account != 'root'
+
+- name: 'Enable lingering for zot user'
+  ansible.builtin.command:
+    cmd: "loginctl enable-linger {{ zot_user_account }}"
+  changed_when: true
+  become: true
+  when:
+    - zot_user_account != 'root'
+    - (zot_linger['stdout'] | default('')) != 'yes'
+
+- name: 'Ensure zot configuration directory'
+  ansible.builtin.file:
+    path: "{{ zot_config_dir }}"
+    state: 'directory'
+    owner: "{{ zot_user_account }}"
+    mode: '0750'
+  become: "{{ (zot_user_account != 'root') | bool }}"
+
+- name: 'Deploy zot'
+  become: "{{ (zot_effective_user['stdout'] != zot_user_account) | bool }}"
+  become_user: "{{ zot_user_account }}"
+  block:
+    - name: 'Set up volumes'
+      ansible.builtin.import_tasks: 'volume.yml'
+
+    - name: 'Deploy container'
+      ansible.builtin.import_tasks: 'deploy.yml'
+
+    - name: 'Flush handlers'
+      ansible.builtin.meta: 'flush_handlers'

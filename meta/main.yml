@@ -1,0 +1,32 @@
+---
+galaxy_info:
+  author: 'thulium_drake'
+  description: 'Deploy the zot OCI container registry as a Podman container'
+  role_name: 'zot'
+
+  license: 'GPLv3'
+
+  min_ansible_version: '2.10'
+
+  platforms:
+    - name: 'Debian'
+      versions:
+        - 'bookworm'
+        - 'trixie'
+    - name: 'Ubuntu'
+      versions:
+        - 'jammy'
+        - 'noble'
+    - name: 'EL'
+      versions:
+        - '9'
+        - '10'
+
+  galaxy_tags:
+    - 'container'
+    - 'oci'
+    - 'podman'
+    - 'registry'
+    - 'zot'
+
+dependencies: []

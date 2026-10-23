@@ -1,0 +1,44 @@
+---
+- name: 'Verify'
+  hosts: 'all'
+  tasks:
+    - name: 'Check zot quadlet files exist'
+      ansible.builtin.stat:
+        path: "{{ quadlet_file }}"
+      register: 'zot_quadlet_files'
+      loop:
+        - '/etc/containers/systemd/zot.container'
+        - '/etc/containers/systemd/zot-data.volume'
+      loop_control:
+        loop_var: 'quadlet_file'
+
+    - name: 'Assert quadlet files were created'
+      ansible.builtin.assert:
+        that:
+          - quadlet_file['stat']['exists']
+        fail_msg: "Quadlet file {{ quadlet_file['stat']['path'] }} was not created"
+      loop: "{{ zot_quadlet_files['results'] }}"
+      loop_control:
+        loop_var: 'quadlet_file'
+        label: "{{ quadlet_file['stat']['path'] }}"
+
+    - name: 'Check zot configuration exists'
+      ansible.builtin.stat:
+        path: '/etc/zot/config.json'
+      register: 'zot_config_file'
+
+    - name: 'Assert zot configuration was created'
+      ansible.builtin.assert:
+        that:
+          - zot_config_file['stat']['exists']
+        fail_msg: 'zot configuration file was not created'
+
+    - name: 'Check zot registry is responsive'
+      ansible.builtin.uri:
+        url: 'http://localhost:5000/v2/'
+        method: 'GET'
+        status_code: 200
+      register: 'zot_health'
+      retries: 30
+      delay: 10
+      until: zot_health['status'] == 200
