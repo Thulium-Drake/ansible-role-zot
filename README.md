@@ -33,7 +33,7 @@ The role starts from a minimal zot configuration defined in `vars/main.yml`.
 `zot_config` is recursively combined beneath it and written as JSON to
 `<zot_config_dir>/config.json`; where both define the same key, the minimal
 configuration wins, while non-conflicting user keys are kept. The file is
-regenerated on every run, so direct edits to it are overwritten.
+regenerated and validated on every run, so direct edits to it are overwritten.
 
 ### Local users (htpasswd)
 

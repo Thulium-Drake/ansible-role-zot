@@ -7,6 +7,13 @@
     content: "{{ zot_config | combine(zot_config_minimal, recursive=True) | to_nice_json }}\n"
     dest: "{{ zot_config_dir }}/config.json"
     mode: '0640'
+    # Validate the rendered file before it replaces the live configuration. The
+    # image entrypoint is /usr/bin/zot, so this runs 'zot verify'.
+    validate: >-
+      podman run --rm --security-opt label=disable
+      --pull={{ zot_pull_policy }}
+      -v %s:/etc/zot/config.json:ro
+      {{ zot_image }} verify /etc/zot/config.json
 
 - name: 'Deploy zot container'
   containers.podman.podman_container:
