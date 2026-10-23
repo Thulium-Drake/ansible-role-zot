@@ -23,7 +23,7 @@
 - name: 'Ensure lingering enabled'
   ansible.builtin.command: "loginctl enable-linger {{ zot_user_account }}"
   args:
-    creates: "/var/lib/systemd/linger/{{ podman_user_account }}"
+    creates: "/var/lib/systemd/linger/{{ zot_user_account }}"
   changed_when: true
   become: true
   when:
