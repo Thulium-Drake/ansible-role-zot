@@ -6,7 +6,7 @@ dependency:
 driver:
   name: 'podman'
 platforms:
-  - name: 'molecule-zot'
+  - name: "zot-${MOLECULE_DISTRO:-rockylinux9}"
     image: "git.element-networks.nl/containers/${MOLECULE_DISTRO:-rockylinux9}-ansible:latest"
     command: '/lib/systemd/systemd'
     pre_build_image: true
