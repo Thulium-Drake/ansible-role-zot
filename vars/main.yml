@@ -38,7 +38,7 @@ zot_containers:
     image: "{{ zot_image }}"
     command: "serve {{ zot_container_config_dir }}/config.json"
     ports:
-      - "{{ zot_listen_port }}:{{ zot_container_port }}"
+      - "{{ zot_listen_uri }}:{{ zot_container_port }}"
     volume:
       - "{{ zot_data_volume_name }}:{{ zot_data_dir }}:Z"
       - "{{ zot_config_dir }}:{{ zot_container_config_dir }}:ro,Z"

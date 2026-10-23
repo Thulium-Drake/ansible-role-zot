@@ -6,8 +6,8 @@ zot_image: 'ghcr.io/project-zot/zot-linux-amd64:v2.1.22'
 zot_pull_policy: 'newer'
 zot_quadlet_options: []
 
-# Host port on which the registry is published on the host.
-zot_listen_port: '127.0.0.1:5000'
+# Host uri on which the registry is published on the host.
+zot_listen_uri: '127.0.0.1:5000'
 
 # Static host directory containing the generated zot config. For non-root
 # deployments the directory is created and owned by the zot user.
@@ -21,8 +21,7 @@ zot_config_dir: '/etc/zot'
 zot_config: {}
 
 # Account that owns the configuration directory and runs the container. The
-# role creates it if it does not exist. Set to null to use the account Ansible
-# executes as, or to 'root' for a system-scoped deployment.
+# role creates it if it does not exist. Set to 'root' for a system-scoped deployment.
 zot_user_account: 'zot'
 
 # Log level for zot, written to log.level in the generated configuration.
@@ -44,7 +43,7 @@ zot_apache_key: '/etc/ssl/server.key'
 zot_apache_hsts: false
 
 # URL under which Apache can reach zot, used as the reverse proxy target.
-zot_apache_backend_url: "http://{{ zot_listen_port }}"
+zot_apache_backend_url: "http://{{ zot_listen_uri }}"
 
 # File name of the vhost configuration, without the .conf extension.
 zot_apache_vhost_name: 'zot'
