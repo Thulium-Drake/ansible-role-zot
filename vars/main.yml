@@ -23,6 +23,10 @@ zot_config_minimal:
   http:
     address: '0.0.0.0'
     port: "{{ zot_container_port | string }}"
+    # zot's own defaults (60s) cover the entire request/response body and
+    # abort large blob uploads and downloads, so set them explicitly.
+    readTimeout: "{{ zot_http_read_timeout }}"
+    writeTimeout: "{{ zot_http_write_timeout }}"
     auth:
       htpasswd:
         path: "{{ zot_container_htpasswd_file }}"

@@ -5,6 +5,13 @@ ProxyRequests Off
 # Keep the encoded slashes used in OCI repository names and blob URLs.
 AllowEncodedSlashes NoDecode
 
+# Blob uploads and downloads can keep the backend connection busy for a long
+# time. httpd otherwise uses its 60 second TimeOut for proxied connections,
+# which aborts large transfers before zot finishes them.
+ProxyTimeout {{ zot_apache_proxy_timeout }}
+# Registry blobs are large: never inherit a server-wide request body limit.
+LimitRequestBody 0
+
 RequestHeader set X-Forwarded-Proto "https"
 RequestHeader set X-Forwarded-Host "{{ zot_apache_server_name }}"
 

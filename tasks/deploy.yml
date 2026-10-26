@@ -14,6 +14,9 @@
       --pull={{ zot_pull_policy }}
       -v %s:/etc/zot/config.json:ro
       {{ zot_image }} verify /etc/zot/config.json
+    # The HTTP server timeouts are applied at startup and are not hot
+    # reloadable, so restart zot when the configuration changes.
+    notify: 'Restart zot'
 
 - name: 'Deploy zot container'
   containers.podman.podman_container:

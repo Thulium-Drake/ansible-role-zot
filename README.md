@@ -14,15 +14,18 @@ All variables are optional.
 | `zot_quadlet_options` | `[]` | Additional Quadlet options for the container unit. |
 | `zot_listen_uri` | `127.0.0.1:5000` | Host publish address for the registry. |
 | `zot_config_dir` | `/etc/zot` | Host directory holding `config.json`. |
-| `zot_config` | see `defaults/main.yml` | Additional zot configuration, recursively merged beneath the role's minimal configuration and written to `config.json`. Role-managed keys (`distSpecVersion`, `storage.rootDirectory`, `http.address`, `http.port`, `http.auth.htpasswd.path`, `log.level`) take precedence. See the [zot configuration reference](https://zotregistry.dev/v2.1.22/admin-guide/admin-configuration/). |
+| `zot_config` | see `defaults/main.yml` | Additional zot configuration, recursively merged beneath the role's minimal configuration and written to `config.json`. Role-managed keys (`distSpecVersion`, `storage.rootDirectory`, `http.address`, `http.port`, `http.readTimeout`, `http.writeTimeout`, `http.auth.htpasswd.path`, `log.level`) take precedence. See the [zot configuration reference](https://zotregistry.dev/v2.1.22/admin-guide/admin-configuration/). |
 | `zot_user_account` | `zot` | Account that owns the configuration directory and runs the container. Use `root` for a system-scoped root deployment, or `null` to use the account Ansible executes as. |
 | `zot_log_level` | `info` | Log level written to `log.level` in the generated configuration. Use this instead of `zot_config.log.level`, which the minimal configuration overrides. |
+| `zot_http_read_timeout` | `30m` | Maximum duration for reading an entire request, including blob uploads. zot defaults to `60s`, which aborts large pushes. Use `0s` to disable the timeout. |
+| `zot_http_write_timeout` | `30m` | Maximum duration for writing a response, including blob downloads. zot defaults to `60s`, which aborts large pulls. Use `0s` to disable the timeout. |
 | `zot_apache_vhost` | `false` | Write an Apache httpd vhost that reverse proxies zot over HTTPS. The role does not install Apache; see [Apache httpd reverse proxy](#apache-httpd-reverse-proxy). |
 | `zot_apache_server_name` | `{{ ansible_facts['fqdn'] }}` | Hostname the vhost answers on. It must be unique among the vhosts of the httpd instance. |
 | `zot_apache_cert` | `/etc/ssl/server.crt` | TLS certificate used by the HTTPS vhost. |
 | `zot_apache_key` | `/etc/ssl/server.key` | TLS key used by the HTTPS vhost. |
 | `zot_apache_hsts` | `false` | Send the HSTS header from the HTTPS vhost. |
 | `zot_apache_backend_url` | `http://{{ zot_listen_uri }}` | URL that Apache proxies requests to. |
+| `zot_apache_proxy_timeout` | `1800` | Socket timeout in seconds for the proxied connection to zot. Keep it at least as large as the zot read/write timeouts. |
 | `zot_apache_vhost_name` | `zot` | Base name of the vhost file, `<name>.conf`. |
 | `zot_htpasswd_users` | `[]` | Local users for htpasswd authentication. Each entry needs a `name` and a `password`; hashes are written to `/etc/zot/htpasswd`, which always exists. Keep passwords in an encrypted source such as Ansible Vault. |
 | `zot_debug` | `false` | Disables `no_log` on the container and systemd tasks. Enable it only temporarily while troubleshooting. |
@@ -91,6 +94,14 @@ Requirements on the existing installation:
 - When using OpenID authentication behind the proxy, set
   `zot_config.http.externalUrl` to the public vhost URL so redirects point at
   Apache instead of the container.
+
+#### Large images
+
+zot applies a 60 second `readTimeout` and `writeTimeout` to its HTTP server by
+default.  The role raises both zot timeouts to 30 minutes with
+`zot_http_read_timeout` and `zot_http_write_timeout`, and gives the Apache
+backend connection a matching `ProxyTimeout`, so large blobs can be
+transferred.
 
 ## Example playbooks
 
