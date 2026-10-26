@@ -16,6 +16,7 @@
     name: "{{ zot_user_account }}"
     comment: 'zot container registry'
     create_home: true
+    home: '/var/lib/zot'
     state: 'present'
   become: true
   when: zot_user_account != 'root'
