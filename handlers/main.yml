@@ -1,24 +1,36 @@
 ---
+# A handler cannot be a block: a named block is not registered as a handler,
+# and notifying its name matches a task inside it instead. These handlers
+# share the 'Reload Apache httpd' listen topic so all steps run in order.
+- name: 'Check whether Apache httpd is running'
+  become: true
+  ansible.builtin.service_facts:
+  changed_when: false
+  check_mode: false
+  listen: 'Reload Apache httpd'
+
+# The role does not install Apache: the vhost may be written before httpd
+# exists. Only validate and reload a running instance. This httpd is shared
+# with other vhosts, so an invalid generated file must not be loaded.
+- name: 'Validate Apache httpd configuration'
+  become: true
+  ansible.builtin.command:
+    cmd: 'apachectl configtest'
+  changed_when: false
+  when:
+    - (zot_apache_service ~ '.service') in (ansible_facts['services'] | default({}))
+    - ansible_facts['services'][zot_apache_service ~ '.service']['state'] == 'running'
+  listen: 'Reload Apache httpd'
+
 - name: 'Reload Apache httpd'
   become: true
-  block:
-    - name: 'Gather service state'
-      ansible.builtin.service_facts:
-
-    # Validate before reloading so an invalid vhost does not take the running
-    # Apache instance down.
-    - name: 'Validate Apache httpd configuration'
-      ansible.builtin.command:
-        cmd: 'apachectl configtest'
-      changed_when: false
-
-    - name: 'Reload Apache httpd'
-      ansible.builtin.service:
-        name: "{{ zot_apache_service }}"
-        state: 'reloaded'
-      when:
-        - (zot_apache_service ~ '.service') in ansible_facts.services
-        - ansible_facts.services[zot_apache_service ~ '.service']['state'] == 'running'
+  ansible.builtin.service:
+    name: "{{ zot_apache_service }}"
+    state: 'reloaded'
+  when:
+    - (zot_apache_service ~ '.service') in (ansible_facts['services'] | default({}))
+    - ansible_facts['services'][zot_apache_service ~ '.service']['state'] == 'running'
+  listen: 'Reload Apache httpd'
 
 - name: 'Restart zot'
   ansible.builtin.systemd:
