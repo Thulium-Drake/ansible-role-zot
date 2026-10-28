@@ -46,3 +46,11 @@ zot_containers:
     volume:
       - "{{ zot_data_volume_name }}:{{ zot_data_dir }}:Z"
       - "{{ zot_config_dir }}:{{ zot_container_config_dir }}:ro,Z"
+    quadlet_options:
+      - 'AutoUpdate=registry'
+      - |
+        [Install]
+        WantedBy=default.target
+      - |
+        [Service]
+        Restart=always
