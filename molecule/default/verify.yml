@@ -33,6 +33,19 @@
           - zot_config_file['stat']['exists']
         fail_msg: 'zot configuration file was not created'
 
+    - name: 'Read sync credentials file'
+      ansible.builtin.slurp:
+        src: '/etc/zot/sync-credentials.json'
+      register: 'zot_sync_credentials_file_data'
+
+    - name: 'Assert sync credentials were written'
+      ansible.builtin.assert:
+        that:
+          - (zot_sync_credentials_file_data['content'] | b64decode | from_json)['registry.example.com']['username'] == 'test'
+          - (zot_sync_credentials_file_data['content'] | b64decode | from_json)['registry.example.com']['password'] == 'test'
+        fail_msg: 'zot sync credentials file was not written correctly'
+        success_msg: 'zot sync credentials file was written correctly'
+
     - name: 'Check zot registry is responsive'
       ansible.builtin.uri:
         url: 'http://localhost:5000/v2/'

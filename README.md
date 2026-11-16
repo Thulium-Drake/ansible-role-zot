@@ -28,6 +28,8 @@ All variables are optional.
 | `zot_apache_proxy_timeout` | `1800` | Socket timeout in seconds for the proxied connection to zot. Keep it at least as large as the zot read/write timeouts. |
 | `zot_apache_vhost_name` | `zot` | Base name of the vhost file, `<name>.conf`. |
 | `zot_htpasswd_users` | `[]` | Local users for htpasswd authentication. Each entry needs a `name` and a `password`; hashes are written to `/etc/zot/htpasswd`, which always exists. Keep passwords in an encrypted source such as Ansible Vault. |
+| `zot_sync_credentials` | `{}` | Credentials for upstream registries used by zot's sync extension, as a mapping of registry host to `username` and `password`. Written as JSON to `zot_sync_credentials_file`. Keep passwords in an encrypted source such as Ansible Vault. See [Registry mirroring credentials](#registry-mirroring-credentials). |
+| `zot_sync_credentials_file` | `{{ zot_config_dir }}/sync-credentials.json` | Host path of the generated sync credentials file. It must be inside `zot_config_dir`, which is mounted at `/etc/zot` in the container. |
 | `zot_debug` | `false` | Disables `no_log` on the container and systemd tasks. Enable it only temporarily while troubleshooting. |
 
 ### Configuration handling
@@ -53,6 +55,61 @@ zot_htpasswd_users:
 
 Note that an empty file leaves no user able to authenticate, so define at least one user
 before using the registry.
+
+### Registry mirroring credentials
+
+zot's [sync extension](https://zotregistry.dev/v2.1.23/articles/mirroring/)
+reads credentials for upstream registries from the JSON file referenced by
+`extensions.sync.credentialsFile`. The role maintains that file at
+`zot_sync_credentials_file`, which defaults to
+`<zot_config_dir>/sync-credentials.json` on the host and `/etc/zot/sync-credentials.json`
+inside the container.
+
+Define `zot_sync_credentials` as a mapping of upstream registry host to a
+username and password, and reference the container path from `zot_config`:
+
+```yaml
+zot_sync_credentials:
+  'registry1:5000':
+    username: 'user'
+    password: "{{ vault_registry1_password }}"
+  'registry2:5000':
+    username: 'user2'
+    password: "{{ vault_registry2_password }}"
+
+zot_config:
+  extensions:
+    sync:
+      enable: true
+      credentialsFile: '/etc/zot/sync-credentials.json'
+      registries:
+        - urls:
+            - 'https://registry1:5000'
+          onDemand: false
+          pollInterval: '6h'
+          tlsVerify: true
+          content:
+            - prefix: '/repo1/repo'
+            - prefix: '/repo2/repo'
+              destination: '/repo2'
+              stripPrefix: true
+        - urls:
+            - 'https://registry2:5000'
+          onDemand: false
+          pollInterval: '12h'
+          tlsVerify: true
+          content:
+            - prefix: '**'
+```
+
+Enable `zot_config.http.compat: ["docker2s2"]` when an upstream registry can
+return Docker schema 2 content. See the upstream
+[polled mirroring example](https://zotregistry.dev/v2.1.23/articles/mirroring/#example-multiple-repositories-with-polled-mirroring)
+for all available sync options.
+
+The file is always written, even when `zot_sync_credentials` is empty, so a
+`credentialsFile` referenced from the configuration exists during validation.
+Changes to the file restart zot.
 
 ### Data and service lifecycle
 

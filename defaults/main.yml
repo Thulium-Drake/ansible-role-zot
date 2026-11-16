@@ -70,6 +70,24 @@ zot_htpasswd_users: []
 # - name: 'alice'
 #   password: 'change-me'
 
+# Credentials for upstream registries that zot mirrors with its sync
+# extension. The mapping is written as JSON to zot_sync_credentials_file, in
+# the format zot expects for extensions.sync.credentialsFile. Keep the
+# passwords in an encrypted variable source such as Ansible Vault.
+zot_sync_credentials: {}
+# zot_sync_credentials:
+#   'registry1:5000':
+#     username: 'user'
+#     password: "{{ vault_registry1_password }}"
+#   'registry2:5000':
+#     username: 'user2'
+#     password: "{{ vault_registry2_password }}"
+
+# Host path of the generated sync credentials file. It must be inside
+# zot_config_dir, which is mounted read-only at /etc/zot in the container.
+# Reference the corresponding path in zot_config.extensions.sync.credentialsFile.
+zot_sync_credentials_file: "{{ zot_config_dir }}/sync-credentials.json"
+
 # When enabled, no_log is disabled on tasks that may expose secrets in their
 # output. Only enable this temporarily while troubleshooting.
 zot_debug: false
