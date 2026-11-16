@@ -71,15 +71,16 @@ zot_htpasswd_users: []
 #   password: 'change-me'
 
 # Credentials for upstream registries that zot mirrors with its sync
-# extension. The mapping is written as JSON to zot_sync_credentials_file, in
-# the format zot expects for extensions.sync.credentialsFile. Keep the
-# passwords in an encrypted variable source such as Ansible Vault.
-zot_sync_credentials: {}
+# extension. Each entry needs a registry host name, a username and a password;
+# the role converts the list to the JSON object zot expects for
+# extensions.sync.credentialsFile. Keep the passwords in an encrypted variable
+# source such as Ansible Vault.
+zot_sync_credentials: []
 # zot_sync_credentials:
-#   'registry1:5000':
+#   - registry: 'registry1:5000'
 #     username: 'user'
 #     password: "{{ vault_registry1_password }}"
-#   'registry2:5000':
+#   - registry: 'registry2:5000'
 #     username: 'user2'
 #     password: "{{ vault_registry2_password }}"
 

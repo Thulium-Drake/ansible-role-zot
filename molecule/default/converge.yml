@@ -5,7 +5,7 @@
     zot_debug: true  # We always want to know what the role does in CI
     zot_user_account: 'root'  # Nested containers in molecule are tricky
     zot_sync_credentials:
-      'registry.example.com':
+      - registry: 'registry.example.com'
         username: 'test'
         password: 'test'
   tasks:

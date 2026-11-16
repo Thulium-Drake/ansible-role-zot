@@ -28,7 +28,7 @@ All variables are optional.
 | `zot_apache_proxy_timeout` | `1800` | Socket timeout in seconds for the proxied connection to zot. Keep it at least as large as the zot read/write timeouts. |
 | `zot_apache_vhost_name` | `zot` | Base name of the vhost file, `<name>.conf`. |
 | `zot_htpasswd_users` | `[]` | Local users for htpasswd authentication. Each entry needs a `name` and a `password`; hashes are written to `/etc/zot/htpasswd`, which always exists. Keep passwords in an encrypted source such as Ansible Vault. |
-| `zot_sync_credentials` | `{}` | Credentials for upstream registries used by zot's sync extension, as a mapping of registry host to `username` and `password`. Written as JSON to `zot_sync_credentials_file`. Keep passwords in an encrypted source such as Ansible Vault. See [Registry mirroring credentials](#registry-mirroring-credentials). |
+| `zot_sync_credentials` | `[]` | Credentials for upstream registries used by zot's sync extension. Each entry needs a `registry` host, a `username` and a `password`; the list is written as a JSON object to `zot_sync_credentials_file`. Keep passwords in an encrypted source such as Ansible Vault. See [Registry mirroring credentials](#registry-mirroring-credentials). |
 | `zot_sync_credentials_file` | `{{ zot_config_dir }}/sync-credentials.json` | Host path of the generated sync credentials file. It must be inside `zot_config_dir`, which is mounted at `/etc/zot` in the container. |
 | `zot_debug` | `false` | Disables `no_log` on the container and systemd tasks. Enable it only temporarily while troubleshooting. |
 
@@ -65,17 +65,19 @@ reads credentials for upstream registries from the JSON file referenced by
 `<zot_config_dir>/sync-credentials.json` on the host and `/etc/zot/sync-credentials.json`
 inside the container.
 
-Define `zot_sync_credentials` as a mapping of upstream registry host to a
-username and password, and reference the container path from `zot_config`:
+Define `zot_sync_credentials` as a list of upstream registries, each with a
+`registry` host, a `username` and a `password`, and reference the container path
+from `zot_config`. The role converts the list to the JSON object zot expects, so
+the registry name may come from a variable:
 
 ```yaml
 zot_sync_credentials:
-  'registry1:5000':
+  - registry: 'registry1:5000'
     username: 'user'
     password: "{{ vault_registry1_password }}"
-  'registry2:5000':
-    username: 'user2'
-    password: "{{ vault_registry2_password }}"
+  - registry: "{{ upstream_registry }}"
+    username: "{{ upstream_user }}"
+    password: "{{ vault_upstream_password }}"
 
 zot_config:
   extensions:
@@ -94,7 +96,7 @@ zot_config:
               destination: '/repo2'
               stripPrefix: true
         - urls:
-            - 'https://registry2:5000'
+            - "https://{{ upstream_registry }}"
           onDemand: false
           pollInterval: '12h'
           tlsVerify: true
