@@ -5,13 +5,15 @@
 - name: 'Ensure sync credentials file'
   ansible.builtin.import_tasks: 'credentials.yml'
 
-- name: 'Write zot configuration'
+- name: 'Write zot configuration'  # noqa risky-file-permissions
   ansible.builtin.copy:
     content: "{{ zot_config | combine(zot_config_minimal, recursive=True) | to_nice_json }}\n"
     dest: "{{ zot_config_dir }}/config.json"
-    mode: '0640'
     # Validate the rendered file before it replaces the live configuration. The
     # image entrypoint is /usr/bin/zot, so this runs 'zot verify'.
+    # Do not set mode here: with validate, the copy module chmods its temporary
+    # source file, which fails when that file is owned by the connection user but
+    # the task runs as an unprivileged become user.
     validate: >-
       podman run --rm --security-opt label=disable
       --pull={{ zot_pull_policy }}
@@ -20,6 +22,13 @@
   # The HTTP server timeouts are applied at startup and are not hot
   # reloadable, so restart zot when the configuration changes.
   notify: 'Restart zot'
+
+- name: 'Set zot configuration permissions'
+  ansible.builtin.file:
+    path: "{{ zot_config_dir }}/config.json"
+    state: 'file'
+    mode: '0640'
+  when: not ansible_check_mode
 
 - name: 'Deploy zot container'
   containers.podman.podman_container:

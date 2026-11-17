@@ -30,7 +30,7 @@ All variables are optional.
 | `zot_htpasswd_users` | `[]` | Local users for htpasswd authentication. Each entry needs a `name` and a `password`; hashes are written to `/etc/zot/htpasswd`, which always exists. Keep passwords in an encrypted source such as Ansible Vault. |
 | `zot_sync_credentials` | `[]` | Credentials for upstream registries used by zot's sync extension. Each entry needs a `registry` host, a `username` and a `password`; the list is written as a JSON object to `zot_sync_credentials_file`. Keep passwords in an encrypted source such as Ansible Vault. See [Registry mirroring credentials](#registry-mirroring-credentials). |
 | `zot_sync_credentials_file` | `{{ zot_config_dir }}/sync-credentials.json` | Host path of the generated sync credentials file. It must be inside `zot_config_dir`, which is mounted at `/etc/zot` in the container. |
-| `zot_debug` | `false` | Disables `no_log` on the container and systemd tasks. Enable it only temporarily while troubleshooting. |
+| `zot_debug` | `false` | Disables `no_log` on all tasks, allowing their output to be logged. Set `-e zot_debug=true` to enable it only temporarily while troubleshooting. |
 
 ### Configuration handling
 

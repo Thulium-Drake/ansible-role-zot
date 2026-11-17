@@ -89,6 +89,6 @@ zot_sync_credentials: []
 # Reference the corresponding path in zot_config.extensions.sync.credentialsFile.
 zot_sync_credentials_file: "{{ zot_config_dir }}/sync-credentials.json"
 
-# When enabled, no_log is disabled on tasks that may expose secrets in their
-# output. Only enable this temporarily while troubleshooting.
+# When enabled with -e zot_debug=true, no_log is disabled on all tasks that may
+# expose secrets in their output. Only enable this temporarily while troubleshooting.
 zot_debug: false
